@@ -10,7 +10,7 @@
 </div>
 
 ## Description
-This project is a Rinha programming language compliant interpreter designed to take part in [@aripiprazole/rinha-de-compiler](https://github.com/aripiprazole/rinha-de-compiler), a "compilers cockfight". I had zero to none experience with Rust before and I decided to build a code interpreter written in it. What a great idea, isn't it? I implemented a [Tree-Walk Interpreter](https://craftinginterpreters.com/a-tree-walk-interpreter.html) that takes advantage of pre-generated [ASTs (abstract syntax trees)](https://wikipedia.org/wiki/Abstract_syntax_tree) through [rinha](https://crates.io/crates/rinha) and evaluates it. It didn't turned out as a bad idea because somehow I got into [Rodrigo Navarro](https://github.com/reu)'s [live coding](https://www.youtube.com/watch?v=FbCdhicY3sk), in which he [implemented a minimal Rinha interpreter in Rust](https://github.com/reu/rinha-compiladores), explaining it along the way. [Henri Borges](https://github.com/hnrbs) also [coded a great and simple interpreter in Rust](https://github.com/hnrbs/rinha), both of which served as a reference for me to create my own Rinha interpreter.
+This project is a Rinha programming language compliant interpreter designed to take part in [@aripiprazole/rinha-de-compiler](https://github.com/aripiprazole/rinha-de-compiler), a "compilers cockfight". I had zero to none experience with Rust before and I decided to build a code interpreter written in it. What a great idea, isn't it? I implemented a [Tree-Walk Interpreter](https://craftinginterpreters.com/a-tree-walk-interpreter.html) that takes advantage of pre-generated [ASTs (abstract syntax trees)](https://wikipedia.org/wiki/Abstract_syntax_tree) through [rinha](https://crates.io/crates/rinha) and evaluates it. It didn't turned out as a bad idea because somehow I got into [Rodrigo Navarro](https://github.com/reu)'s [live coding](https://www.youtube.com/watch?v=FbCdhicY3sk), in which he [implemented a minimal Rinha interpreter in Rust](https://github.com/reu/rinha-compiladores), explaining it along the way. [Henri Borges](https://github.com/hnrbs) also [implemented a great and simple interpreter in Rust](https://github.com/hnrbs/rinha), both of which served as a reference for me to deepen my studies in Rust and create my own Rinha interpreter.
 
 ## Run
 By default, the Rinha source code JSON AST is located at `/var/rinha/source.rinha.json`.
@@ -31,4 +31,4 @@ docker run rinha-interpreter
   - [Live coding](https://www.youtube.com/watch?v=FbCdhicY3sk)
   - [Implementation](https://github.com/reu/rinha-compiladores)
 - [Henri Borges](https://github.com/hnrbs)
- - [Implementation](https://github.com/hnrbs/rinha)
+  - [Implementation](https://github.com/hnrbs/rinha)
