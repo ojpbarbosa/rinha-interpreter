@@ -1,7 +1,6 @@
-pub mod ast;
-pub mod interpreter;
-
 use std::fs;
+
+use rinha_interpreter::{ast, interpreter};
 
 fn main() {
     let file_path = "var/rinha/source.rinha.json";

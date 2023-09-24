@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::ast::{self};
+use crate::ast;
 
 pub enum Value {
     Int(i32),
