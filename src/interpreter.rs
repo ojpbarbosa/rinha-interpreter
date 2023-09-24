@@ -56,28 +56,92 @@ impl Display for RuntimeErrorKind {
     }
 }
 
-fn invalid_numeric_op(op: String, a: &Value, b: &Value, location: ast::Location) -> RuntimeError {
-    RuntimeError {
-        message: format!("Cannot {:?} {:?} and {:?}", op, a, b),
-        location,
-        kind: RuntimeErrorKind::InvalidBinaryOperation,
+pub fn interpret_program(program: ast::File) {
+    // todo: create context
+    if let Err(error) = evaluate(program.expression) {
+        println!("{}", error);
     }
 }
 
-fn divison_by_zero(message: String, location: ast::Location) -> RuntimeError {
-    RuntimeError {
-        message,
-        location,
-        kind: RuntimeErrorKind::DivisionByZero,
+fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
+    match term {
+        ast::Term::Int(int) => Ok(Value::Int(int.value)),
+        ast::Term::Str(str) => Ok(Value::Str(str.value)),
+        ast::Term::Call(call) => evaluate_call(*call),
+        ast::Term::Binary(binary) => evaluate_binary(*binary),
+        ast::Term::Function(function) => evaluate_function(*function),
+        ast::Term::Let(let_) => evaluate_let(*let_),
+        ast::Term::If(if_) => evaluate_if(*if_),
+        ast::Term::Print(print) => {
+            let value = evaluate(print.value)?;
+            println!("{value}");
+            Ok(value)
+        }
+        ast::Term::First(first) => match evaluate(first.value)? {
+            Value::Tuple((value, _)) => Ok(*value),
+            _ => Err(RuntimeError {
+                message: String::from("not a tuple"),
+                location: first.location,
+                kind: RuntimeErrorKind::ArgumentError,
+            }),
+        },
+        ast::Term::Second(second) => match evaluate(second.value)? {
+            Value::Tuple((_, value)) => Ok(*value),
+            _ => Err(RuntimeError {
+                message: String::from("not a tuple"),
+                location: second.location,
+                kind: RuntimeErrorKind::ArgumentError,
+            }),
+        },
+        ast::Term::Bool(bool) => Ok(Value::Bool(bool.value)),
+        ast::Term::Tuple(tuple) => Ok(Value::Tuple((
+            Box::new(evaluate(tuple.first)?),
+            Box::new(evaluate(tuple.second)?),
+        ))),
+        ast::Term::Var(var) => evaluate_var(var),
     }
 }
 
-fn invalid_comparison(a: &Value, b: &Value, location: ast::Location) -> RuntimeError {
-    RuntimeError {
-        message: format!("Cannot compare {:?} and {:?}", a, b),
-        location,
-        kind: RuntimeErrorKind::InvalidBinaryOperation,
+fn evaluate_call(call: ast::Call) -> Result<Value, RuntimeError> {
+    todo!();
+}
+
+fn evaluate_binary(binary: ast::Binary) -> Result<Value, RuntimeError> {
+    let lhs = evaluate(binary.lhs)?;
+    let rhs = evaluate(binary.rhs)?;
+
+    let location = binary.location;
+    match binary.op {
+        ast::BinaryOp::Add => lhs.add(&rhs),
+        ast::BinaryOp::Sub => lhs.sub(&rhs, location),
+        ast::BinaryOp::Mul => lhs.mul(&rhs, location),
+        ast::BinaryOp::Div => lhs.div(&rhs, location),
+        ast::BinaryOp::Rem => lhs.rem(&rhs, location),
+        ast::BinaryOp::Eq => lhs.eq(&rhs, location),
+        ast::BinaryOp::Neq => lhs.neq(&rhs, location),
+        ast::BinaryOp::Lt => lhs.lt(&rhs, location),
+        ast::BinaryOp::Lte => lhs.lte(&rhs, location),
+        ast::BinaryOp::Gt => lhs.gt(&rhs, location),
+        ast::BinaryOp::Gte => lhs.gte(&rhs, location),
+        ast::BinaryOp::And => lhs.and(&rhs, location),
+        ast::BinaryOp::Or => lhs.or(&rhs, location),
     }
+}
+
+fn evaluate_function(function: ast::Function) -> Result<Value, RuntimeError> {
+    todo!();
+}
+
+fn evaluate_let(let_: ast::Let) -> Result<Value, RuntimeError> {
+    todo!();
+}
+
+fn evaluate_if(if_: ast::If) -> Result<Value, RuntimeError> {
+    todo!();
+}
+
+fn evaluate_var(var: ast::Var) -> Result<Value, RuntimeError> {
+    todo!();
 }
 
 impl Value {
@@ -204,90 +268,26 @@ impl Value {
     }
 }
 
-fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
-    match term {
-        ast::Term::Int(int) => Ok(Value::Int(int.value)),
-        ast::Term::Str(str) => Ok(Value::Str(str.value)),
-        ast::Term::Call(call) => evaluate_call(*call),
-        ast::Term::Binary(binary) => evaluate_binary(*binary),
-        ast::Term::Function(function) => evaluate_function(*function),
-        ast::Term::Let(let_) => evaluate_let(*let_),
-        ast::Term::If(if_) => evaluate_if(*if_),
-        ast::Term::Print(print) => {
-            let value = evaluate(print.value)?;
-            println!("{value}");
-            Ok(value)
-        }
-        ast::Term::First(first) => match evaluate(first.value)? {
-            Value::Tuple((value, _)) => Ok(*value),
-            _ => Err(RuntimeError {
-                message: String::from("not a tuple"),
-                location: first.location,
-                kind: RuntimeErrorKind::ArgumentError,
-            }),
-        },
-        ast::Term::Second(second) => match evaluate(second.value)? {
-            Value::Tuple((_, value)) => Ok(*value),
-            _ => Err(RuntimeError {
-                message: String::from("not a tuple"),
-                location: second.location,
-                kind: RuntimeErrorKind::ArgumentError,
-            }),
-        },
-        ast::Term::Bool(bool) => Ok(Value::Bool(bool.value)),
-        ast::Term::Tuple(tuple) => Ok(Value::Tuple((
-            Box::new(evaluate(tuple.first)?),
-            Box::new(evaluate(tuple.second)?),
-        ))),
-        ast::Term::Var(var) => evaluate_var(var),
+fn invalid_numeric_op(op: String, a: &Value, b: &Value, location: ast::Location) -> RuntimeError {
+    RuntimeError {
+        message: format!("Cannot {:?} {:?} and {:?}", op, a, b),
+        location,
+        kind: RuntimeErrorKind::InvalidBinaryOperation,
     }
 }
 
-fn evaluate_call(call: ast::Call) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-fn evaluate_binary(binary: ast::Binary) -> Result<Value, RuntimeError> {
-    let lhs = evaluate(binary.lhs)?;
-    let rhs = evaluate(binary.rhs)?;
-
-    let location = binary.location;
-    match binary.op {
-        ast::BinaryOp::Add => lhs.add(&rhs),
-        ast::BinaryOp::Sub => lhs.sub(&rhs, location),
-        ast::BinaryOp::Mul => lhs.mul(&rhs, location),
-        ast::BinaryOp::Div => lhs.div(&rhs, location),
-        ast::BinaryOp::Rem => lhs.rem(&rhs, location),
-        ast::BinaryOp::Eq => lhs.eq(&rhs, location),
-        ast::BinaryOp::Neq => lhs.neq(&rhs, location),
-        ast::BinaryOp::Lt => lhs.lt(&rhs, location),
-        ast::BinaryOp::Lte => lhs.lte(&rhs, location),
-        ast::BinaryOp::Gt => lhs.gt(&rhs, location),
-        ast::BinaryOp::Gte => lhs.gte(&rhs, location),
-        ast::BinaryOp::And => lhs.and(&rhs, location),
-        ast::BinaryOp::Or => lhs.or(&rhs, location),
+fn divison_by_zero(message: String, location: ast::Location) -> RuntimeError {
+    RuntimeError {
+        message,
+        location,
+        kind: RuntimeErrorKind::DivisionByZero,
     }
 }
 
-fn evaluate_function(function: ast::Function) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-fn evaluate_let(let_: ast::Let) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-fn evaluate_if(if_: ast::If) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-fn evaluate_var(var: ast::Var) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-pub fn interpret_program(program: ast::File) {
-    // todo: create context
-    if let Err(error) = evaluate(program.expression) {
-        println!("{}", error);
+fn invalid_comparison(a: &Value, b: &Value, location: ast::Location) -> RuntimeError {
+    RuntimeError {
+        message: format!("Cannot compare {:?} and {:?}", a, b),
+        location,
+        kind: RuntimeErrorKind::InvalidBinaryOperation,
     }
 }
