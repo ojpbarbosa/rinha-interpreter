@@ -92,7 +92,7 @@ fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
             }),
         },
         ast::Term::Second(second) => match evaluate(second.value)? {
-            Value::Tuple((value, _)) => Ok(*value),
+            Value::Tuple((_, value)) => Ok(*value),
             _ => Err(RuntimeError {
                 message: String::from("not a tuple"),
                 location: second.location,
