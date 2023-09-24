@@ -1,5 +1,5 @@
 {
-  "name": ".\\var\\rinha\\hello.rinha",
+  "name": ".\\var\\rinha\\tuple.rinha",
   "expression": {
     "kind": "Print",
     "value": {
@@ -10,33 +10,33 @@
         "location": {
           "start": 7,
           "end": 12,
-          "filename": ".\\var\\rinha\\hello.rinha"
+          "filename": ".\\var\\rinha\\tuple.rinha"
         }
       },
       "second": {
-        "kind": "Str",
-        "value": "cde",
+        "kind": "Bool",
+        "value": true,
         "location": {
           "start": 14,
-          "end": 19,
-          "filename": ".\\var\\rinha\\hello.rinha"
+          "end": 18,
+          "filename": ".\\var\\rinha\\tuple.rinha"
         }
       },
       "location": {
         "start": 6,
-        "end": 20,
-        "filename": ".\\var\\rinha\\hello.rinha"
+        "end": 19,
+        "filename": ".\\var\\rinha\\tuple.rinha"
       }
     },
     "location": {
       "start": 0,
-      "end": 21,
-      "filename": ".\\var\\rinha\\hello.rinha"
+      "end": 20,
+      "filename": ".\\var\\rinha\\tuple.rinha"
     }
   },
   "location": {
     "start": 0,
-    "end": 21,
-    "filename": ".\\var\\rinha\\hello.rinha"
+    "end": 20,
+    "filename": ".\\var\\rinha\\tuple.rinha"
   }
 }
