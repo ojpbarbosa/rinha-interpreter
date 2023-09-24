@@ -29,21 +29,23 @@ pub struct Var {
 #[derive(Deserialize, Debug)]
 pub struct Function {
     pub parameters: Vec<Parameter>,
-    pub value: Box<Term>,
+    pub value: Term,
+    pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Call {
-    pub callee: Box<Term>,
+    pub callee: Term,
     pub arguments: Vec<Term>,
+    pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Let {
-    name: Parameter,
-    value: Box<Term>,
-    next: Box<Term>,
-    location: Location,
+    pub name: Parameter,
+    pub value: Term,
+    pub next: Term,
+    pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
@@ -83,42 +85,42 @@ pub struct Bool {
 
 #[derive(Deserialize, Debug)]
 pub struct If {
-    pub condition: Box<Term>,
-    pub then: Box<Term>,
-    pub otherwise: Box<Term>,
+    pub condition: Term,
+    pub then: Term,
+    pub otherwise: Term,
     pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Binary {
-    pub lhs: Box<Term>,
+    pub lhs: Term,
     pub op: BinaryOp,
-    pub rhs: Box<Term>,
+    pub rhs: Term,
     pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Tuple {
-    pub first: Box<Term>,
-    pub second: Box<Term>,
+    pub first: Term,
+    pub second: Term,
     pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct First {
-    pub value: Box<Term>,
+    pub value: Term,
     pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Second {
-    pub value: Box<Term>,
+    pub value: Term,
     pub location: Location,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Print {
-    pub value: Box<Term>,
+    pub value: Term,
     pub location: Location,
 }
 
@@ -127,15 +129,15 @@ pub struct Print {
 pub enum Term {
     Int(Int),
     Str(Str),
-    Call(Call),
-    Binary(Binary),
-    Function(Function),
-    Let(Let),
-    If(If),
-    Print(Print),
-    First(First),
-    Second(Second),
+    Call(Box<Call>),
+    Binary(Box<Binary>),
+    Function(Box<Function>),
+    Let(Box<Let>),
+    If(Box<If>),
+    Print(Box<Print>),
+    First(Box<First>),
+    Second(Box<Second>),
     Bool(Bool),
-    Tuple(Tuple),
+    Tuple(Box<Tuple>),
     Var(Var),
 }
