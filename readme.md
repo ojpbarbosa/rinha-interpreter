@@ -15,8 +15,8 @@ This project is a Rinha programming language compliant interpreter designed to t
 ## Run
 By default, the Rinha source code JSON AST is located at `/var/rinha/source.rinha.json`.
 ```bash
-docker build . -t rinha
-docker run -it rinha
+docker build . -t rinha-interpreter
+docker run rinha-interpreter
 ```
 
 ## Stack

@@ -1,16 +1,16 @@
 FROM rust:1.70.0-slim-buster AS build
 
-RUN cargo new --bin rinha
-WORKDIR /rinha
+RUN cargo new --bin rinha-interpreter
+WORKDIR /rinha-interpreter
 
-COPY Cargo.toml /rinha/
-COPY Cargo.lock /rinha/
-COPY src /rinha/src
+COPY Cargo.toml /rinha-interpreter
+COPY Cargo.lock /rinha-interpreter
+COPY src /rinha-interpreter/src
 
 RUN cargo build --release
 
-FROM debian:buster-slim
+FROM debian:bookworm
 
-COPY --from=build /rinha/target/release/rinha-interpreter /rinha
+COPY --from=build /rinha-interpreter/target/release/rinha-interpreter /rinha-interpreter
 
-CMD "/rinha"
+ENTRYPOINT ["/rinha-interpreter", "/var/rinha/source.rinha.json"]
