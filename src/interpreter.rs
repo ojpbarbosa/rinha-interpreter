@@ -16,6 +16,7 @@ fn evaluate(term: ast::Term) -> Value {
             };
             Value::Void
         }
+        _ => todo!(),
     }
 }
 
