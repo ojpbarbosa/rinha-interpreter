@@ -166,7 +166,15 @@ fn evaluate_let(let_: ast::Let, scope: &Scope) -> Result<Value, RuntimeError> {
 }
 
 fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
-    todo!();
+    match evaluate(if_.condition, scope)? {
+        Value::Bool(true) => evaluate(if_.then, scope),
+        Value::Bool(false) => evaluate(if_.otherwise, scope),
+        _ => Err(RuntimeError {
+            message: String::from("Invalid condition"),
+            location: if_.location,
+            kind: RuntimeErrorKind::ArgumentError,
+        }),
+    }
 }
 
 fn evaluate_var(var: ast::Var, scope: &Scope) -> Result<Value, RuntimeError> {
