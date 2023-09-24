@@ -1,8 +1,8 @@
-use std::fmt::Display;
+use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use crate::ast;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Value {
     Int(i32),
     Bool(bool),
@@ -57,27 +57,53 @@ impl Display for RuntimeErrorKind {
 }
 
 pub fn interpret_program(program: ast::File) {
-    // todo: create context
-    if let Err(error) = evaluate(program.expression) {
+    let scope = Scope::new();
+    if let Err(error) = evaluate(program.expression, &scope) {
         println!("{}", error);
     }
 }
 
-fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
+struct Scope {
+    parent: Option<Rc<Scope>>,
+    current: Rc<RefCell<HashMap<String, Value>>>,
+}
+
+impl Scope {
+    pub fn new() -> Self {
+        Scope {
+            parent: None,
+            current: Rc::new(RefCell::new(HashMap::new())),
+        }
+    }
+
+    pub fn get(&self, var: &str) -> Option<Value> {
+        if let Some(val) = self.current.borrow().get(var).cloned() {
+            Some(val)
+        } else {
+            self.parent.as_ref()?.get(var)
+        }
+    }
+
+    pub fn set(&self, var: impl Into<String>, value: Value) {
+        self.current.borrow_mut().insert(var.into(), value);
+    }
+}
+
+fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
     match term {
         ast::Term::Int(int) => Ok(Value::Int(int.value)),
         ast::Term::Str(str) => Ok(Value::Str(str.value)),
         ast::Term::Call(call) => evaluate_call(*call),
-        ast::Term::Binary(binary) => evaluate_binary(*binary),
+        ast::Term::Binary(binary) => evaluate_binary(*binary, scope),
         ast::Term::Function(function) => evaluate_function(*function),
-        ast::Term::Let(let_) => evaluate_let(*let_),
-        ast::Term::If(if_) => evaluate_if(*if_),
+        ast::Term::Let(let_) => evaluate_let(*let_, scope),
+        ast::Term::If(if_) => evaluate_if(*if_, scope),
         ast::Term::Print(print) => {
-            let value = evaluate(print.value)?;
-            println!("{value}");
+            let value = evaluate(print.value, scope)?;
+            println!("{}", value);
             Ok(value)
         }
-        ast::Term::First(first) => match evaluate(first.value)? {
+        ast::Term::First(first) => match evaluate(first.value, scope)? {
             Value::Tuple((value, _)) => Ok(*value),
             _ => Err(RuntimeError {
                 message: String::from("not a tuple"),
@@ -85,7 +111,7 @@ fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
                 kind: RuntimeErrorKind::ArgumentError,
             }),
         },
-        ast::Term::Second(second) => match evaluate(second.value)? {
+        ast::Term::Second(second) => match evaluate(second.value, scope)? {
             Value::Tuple((_, value)) => Ok(*value),
             _ => Err(RuntimeError {
                 message: String::from("not a tuple"),
@@ -95,10 +121,10 @@ fn evaluate(term: ast::Term) -> Result<Value, RuntimeError> {
         },
         ast::Term::Bool(bool) => Ok(Value::Bool(bool.value)),
         ast::Term::Tuple(tuple) => Ok(Value::Tuple((
-            Box::new(evaluate(tuple.first)?),
-            Box::new(evaluate(tuple.second)?),
+            Box::new(evaluate(tuple.first, scope)?),
+            Box::new(evaluate(tuple.second, scope)?),
         ))),
-        ast::Term::Var(var) => evaluate_var(var),
+        ast::Term::Var(var) => evaluate_var(var, scope),
     }
 }
 
@@ -106,9 +132,9 @@ fn evaluate_call(call: ast::Call) -> Result<Value, RuntimeError> {
     todo!();
 }
 
-fn evaluate_binary(binary: ast::Binary) -> Result<Value, RuntimeError> {
-    let lhs = evaluate(binary.lhs)?;
-    let rhs = evaluate(binary.rhs)?;
+fn evaluate_binary(binary: ast::Binary, scope: &Scope) -> Result<Value, RuntimeError> {
+    let lhs = evaluate(binary.lhs, scope)?;
+    let rhs = evaluate(binary.rhs, scope)?;
 
     let location = binary.location;
     match binary.op {
@@ -132,15 +158,18 @@ fn evaluate_function(function: ast::Function) -> Result<Value, RuntimeError> {
     todo!();
 }
 
-fn evaluate_let(let_: ast::Let) -> Result<Value, RuntimeError> {
+fn evaluate_let(let_: ast::Let, scope: &Scope) -> Result<Value, RuntimeError> {
+    let name = let_.name.text.clone();
+    let value = evaluate(let_.value, scope)?;
+    scope.set(name, value.clone());
+    Ok(value)
+}
+
+fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
     todo!();
 }
 
-fn evaluate_if(if_: ast::If) -> Result<Value, RuntimeError> {
-    todo!();
-}
-
-fn evaluate_var(var: ast::Var) -> Result<Value, RuntimeError> {
+fn evaluate_var(var: ast::Var, scope: &Scope) -> Result<Value, RuntimeError> {
     todo!();
 }
 
