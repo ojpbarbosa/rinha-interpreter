@@ -159,10 +159,10 @@ fn evaluate_function(function: ast::Function) -> Result<Value, RuntimeError> {
 }
 
 fn evaluate_let(let_: ast::Let, scope: &Scope) -> Result<Value, RuntimeError> {
-    let name = let_.name.text.clone();
+    let name = let_.name.text;
     let value = evaluate(let_.value, scope)?;
-    scope.set(name, value.clone());
-    Ok(value)
+    scope.set(name, value);
+    evaluate(let_.next, scope)
 }
 
 fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
