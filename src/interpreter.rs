@@ -178,7 +178,14 @@ fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
 }
 
 fn evaluate_var(var: ast::Var, scope: &Scope) -> Result<Value, RuntimeError> {
-    todo!();
+    scope
+        .get(&var.text)
+        .ok_or_else(|| RuntimeError {
+            message: format!("Undefined variable {}", var.text),
+            location: var.location,
+            kind: RuntimeErrorKind::ArgumentError,
+        })
+        .into()
 }
 
 impl Value {
