@@ -155,7 +155,14 @@ fn evaluate_call(call: ast::Call, scope: &Scope) -> Result<Value, RuntimeError> 
                 });
             }
 
-            todo!()
+            for (parameter, argument) in closure.function.parameters.into_iter().zip(call.arguments)
+            {
+                closure
+                    .scope
+                    .set(parameter.text, evaluate(argument, scope)?);
+            }
+
+            evaluate(closure.function.value, &scope)
         }
         _ => Err(RuntimeError {
             message: String::from("Not a function"),
