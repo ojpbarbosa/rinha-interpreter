@@ -11,12 +11,6 @@ pub enum Value {
     Closure(Closure),
 }
 
-#[derive(Debug, Clone)]
-pub struct Closure {
-    function: ast::Function,
-    context: Context,
-}
-
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -28,6 +22,12 @@ impl Display for Value {
             Value::Closure { .. } => write!(f, "<#closure>"),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Closure {
+    function: ast::Function,
+    context: Context,
 }
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ pub fn interpret_program(program: ast::File) {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Context {
     parent: Option<Rc<Context>>,
     current: Rc<RefCell<HashMap<String, Value>>>,
@@ -95,6 +95,18 @@ impl Context {
 
     pub fn set(&self, var: impl Into<String>, value: Value) {
         self.current.borrow_mut().insert(var.into(), value);
+    }
+}
+
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        Context {
+            parent: Some(Rc::new(Context {
+                parent: self.parent.clone(),
+                current: self.current.clone(),
+            })),
+            current: Rc::new(RefCell::new(HashMap::new())),
+        }
     }
 }
 
@@ -162,7 +174,7 @@ fn evaluate_call(call: ast::Call, context: &Context) -> Result<Value, RuntimeErr
                     .set(parameter.text, evaluate(argument, context)?);
             }
 
-            evaluate(closure.function.value, &context)
+            evaluate(closure.function.value, &closure.context)
         }
         _ => Err(RuntimeError {
             message: String::from("Not a function"),
