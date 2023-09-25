@@ -1,46 +1,46 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct File {
     pub name: String,
     pub expression: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Location {
     pub start: i32,
     pub end: i32,
     pub filename: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Parameter {
     pub text: String,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Var {
     pub text: String,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 pub struct Function {
     pub parameters: Vec<Parameter>,
     pub value: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Call {
     pub callee: Term,
     pub arguments: Vec<Term>,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Let {
     pub name: Parameter,
     pub value: Term,
@@ -48,19 +48,19 @@ pub struct Let {
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Str {
     pub value: String,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Int {
     pub value: i32,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub enum BinaryOp {
     Add,
     Sub,
@@ -77,13 +77,13 @@ pub enum BinaryOp {
     Or,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Bool {
     pub value: bool,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct If {
     pub condition: Term,
     pub then: Term,
@@ -91,7 +91,7 @@ pub struct If {
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Binary {
     pub lhs: Term,
     pub op: BinaryOp,
@@ -99,32 +99,32 @@ pub struct Binary {
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Tuple {
     pub first: Term,
     pub second: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct First {
     pub value: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Second {
     pub value: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Print {
     pub value: Term,
     pub location: Location,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "kind")]
 pub enum Term {
     Int(Int),

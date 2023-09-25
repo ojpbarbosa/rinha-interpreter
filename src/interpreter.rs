@@ -2,12 +2,19 @@ use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use crate::ast;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Int(i32),
     Bool(bool),
     Str(String),
     Tuple((Box<Value>, Box<Value>)),
+    Closure(Closure),
+}
+
+#[derive(Debug, Clone)]
+pub struct Closure {
+    function: ast::Function,
+    scope: Scope,
 }
 
 impl Display for Value {
@@ -18,6 +25,7 @@ impl Display for Value {
             Value::Bool(false) => write!(f, "false"),
             Value::Str(str) => write!(f, "{str}"),
             Value::Tuple((first, second)) => write!(f, "({first}, {second})"),
+            Value::Closure { .. } => write!(f, "<#closure>"),
         }
     }
 }
@@ -63,7 +71,8 @@ pub fn interpret_program(program: ast::File) {
     }
 }
 
-struct Scope {
+#[derive(Debug, Clone)]
+pub struct Scope {
     parent: Option<Rc<Scope>>,
     current: Rc<RefCell<HashMap<String, Value>>>,
 }
@@ -93,9 +102,12 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
     match term {
         ast::Term::Int(int) => Ok(Value::Int(int.value)),
         ast::Term::Str(str) => Ok(Value::Str(str.value)),
-        ast::Term::Call(call) => evaluate_call(*call),
+        ast::Term::Call(call) => evaluate_call(*call, scope),
         ast::Term::Binary(binary) => evaluate_binary(*binary, scope),
-        ast::Term::Function(function) => evaluate_function(*function),
+        ast::Term::Function(function) => Ok(Value::Closure(Closure {
+            function: *function,
+            scope: scope.clone(),
+        })),
         ast::Term::Let(let_) => evaluate_let(*let_, scope),
         ast::Term::If(if_) => evaluate_if(*if_, scope),
         ast::Term::Print(print) => {
@@ -106,7 +118,7 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
         ast::Term::First(first) => match evaluate(first.value, scope)? {
             Value::Tuple((value, _)) => Ok(*value),
             _ => Err(RuntimeError {
-                message: String::from("not a tuple"),
+                message: String::from("Not a tuple"),
                 location: first.location,
                 kind: RuntimeErrorKind::ArgumentError,
             }),
@@ -114,7 +126,7 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
         ast::Term::Second(second) => match evaluate(second.value, scope)? {
             Value::Tuple((_, value)) => Ok(*value),
             _ => Err(RuntimeError {
-                message: String::from("not a tuple"),
+                message: String::from("Not a tuple"),
                 location: second.location,
                 kind: RuntimeErrorKind::ArgumentError,
             }),
@@ -128,8 +140,29 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
     }
 }
 
-fn evaluate_call(call: ast::Call) -> Result<Value, RuntimeError> {
-    todo!();
+fn evaluate_call(call: ast::Call, scope: &Scope) -> Result<Value, RuntimeError> {
+    match evaluate(call.callee, scope)? {
+        Value::Closure(closure) => {
+            if call.arguments.len() != closure.function.parameters.len() {
+                return Err(RuntimeError {
+                    message: format!(
+                        "Expected {} arguments, got {}",
+                        closure.function.parameters.len(),
+                        call.arguments.len()
+                    ),
+                    location: call.location,
+                    kind: RuntimeErrorKind::ArgumentError,
+                });
+            }
+
+            todo!()
+        }
+        _ => Err(RuntimeError {
+            message: String::from("Not a function"),
+            location: call.location,
+            kind: RuntimeErrorKind::ArgumentError,
+        }),
+    }
 }
 
 fn evaluate_binary(binary: ast::Binary, scope: &Scope) -> Result<Value, RuntimeError> {
@@ -152,10 +185,6 @@ fn evaluate_binary(binary: ast::Binary, scope: &Scope) -> Result<Value, RuntimeE
         ast::BinaryOp::And => lhs.and(&rhs, location),
         ast::BinaryOp::Or => lhs.or(&rhs, location),
     }
-}
-
-fn evaluate_function(function: ast::Function) -> Result<Value, RuntimeError> {
-    todo!();
 }
 
 fn evaluate_let(let_: ast::Let, scope: &Scope) -> Result<Value, RuntimeError> {
