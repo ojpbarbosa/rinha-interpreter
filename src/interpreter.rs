@@ -14,7 +14,7 @@ pub enum Value {
 #[derive(Debug, Clone)]
 pub struct Closure {
     function: ast::Function,
-    scope: Scope,
+    context: Context,
 }
 
 impl Display for Value {
@@ -65,21 +65,21 @@ impl Display for RuntimeErrorKind {
 }
 
 pub fn interpret_program(program: ast::File) {
-    let scope = Scope::new();
-    if let Err(error) = evaluate(program.expression, &scope) {
+    let context = Context::new();
+    if let Err(error) = evaluate(program.expression, &context) {
         println!("{}", error);
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Scope {
-    parent: Option<Rc<Scope>>,
+pub struct Context {
+    parent: Option<Rc<Context>>,
     current: Rc<RefCell<HashMap<String, Value>>>,
 }
 
-impl Scope {
+impl Context {
     pub fn new() -> Self {
-        Scope {
+        Context {
             parent: None,
             current: Rc::new(RefCell::new(HashMap::new())),
         }
@@ -98,24 +98,24 @@ impl Scope {
     }
 }
 
-fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
+fn evaluate(term: ast::Term, context: &Context) -> Result<Value, RuntimeError> {
     match term {
         ast::Term::Int(int) => Ok(Value::Int(int.value)),
         ast::Term::Str(str) => Ok(Value::Str(str.value)),
-        ast::Term::Call(call) => evaluate_call(*call, scope),
-        ast::Term::Binary(binary) => evaluate_binary(*binary, scope),
+        ast::Term::Call(call) => evaluate_call(*call, context),
+        ast::Term::Binary(binary) => evaluate_binary(*binary, context),
         ast::Term::Function(function) => Ok(Value::Closure(Closure {
             function: *function,
-            scope: scope.clone(),
+            context: context.clone(),
         })),
-        ast::Term::Let(let_) => evaluate_let(*let_, scope),
-        ast::Term::If(if_) => evaluate_if(*if_, scope),
+        ast::Term::Let(let_) => evaluate_let(*let_, context),
+        ast::Term::If(if_) => evaluate_if(*if_, context),
         ast::Term::Print(print) => {
-            let value = evaluate(print.value, scope)?;
+            let value = evaluate(print.value, context)?;
             println!("{}", value);
             Ok(value)
         }
-        ast::Term::First(first) => match evaluate(first.value, scope)? {
+        ast::Term::First(first) => match evaluate(first.value, context)? {
             Value::Tuple((value, _)) => Ok(*value),
             _ => Err(RuntimeError {
                 message: String::from("Not a tuple"),
@@ -123,7 +123,7 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
                 kind: RuntimeErrorKind::ArgumentError,
             }),
         },
-        ast::Term::Second(second) => match evaluate(second.value, scope)? {
+        ast::Term::Second(second) => match evaluate(second.value, context)? {
             Value::Tuple((_, value)) => Ok(*value),
             _ => Err(RuntimeError {
                 message: String::from("Not a tuple"),
@@ -133,15 +133,15 @@ fn evaluate(term: ast::Term, scope: &Scope) -> Result<Value, RuntimeError> {
         },
         ast::Term::Bool(bool) => Ok(Value::Bool(bool.value)),
         ast::Term::Tuple(tuple) => Ok(Value::Tuple((
-            Box::new(evaluate(tuple.first, scope)?),
-            Box::new(evaluate(tuple.second, scope)?),
+            Box::new(evaluate(tuple.first, context)?),
+            Box::new(evaluate(tuple.second, context)?),
         ))),
-        ast::Term::Var(var) => evaluate_var(var, scope),
+        ast::Term::Var(var) => evaluate_var(var, context),
     }
 }
 
-fn evaluate_call(call: ast::Call, scope: &Scope) -> Result<Value, RuntimeError> {
-    match evaluate(call.callee, scope)? {
+fn evaluate_call(call: ast::Call, context: &Context) -> Result<Value, RuntimeError> {
+    match evaluate(call.callee, context)? {
         Value::Closure(closure) => {
             if call.arguments.len() != closure.function.parameters.len() {
                 return Err(RuntimeError {
@@ -158,11 +158,11 @@ fn evaluate_call(call: ast::Call, scope: &Scope) -> Result<Value, RuntimeError> 
             for (parameter, argument) in closure.function.parameters.into_iter().zip(call.arguments)
             {
                 closure
-                    .scope
-                    .set(parameter.text, evaluate(argument, scope)?);
+                    .context
+                    .set(parameter.text, evaluate(argument, context)?);
             }
 
-            evaluate(closure.function.value, &scope)
+            evaluate(closure.function.value, &context)
         }
         _ => Err(RuntimeError {
             message: String::from("Not a function"),
@@ -172,9 +172,9 @@ fn evaluate_call(call: ast::Call, scope: &Scope) -> Result<Value, RuntimeError> 
     }
 }
 
-fn evaluate_binary(binary: ast::Binary, scope: &Scope) -> Result<Value, RuntimeError> {
-    let lhs = evaluate(binary.lhs, scope)?;
-    let rhs = evaluate(binary.rhs, scope)?;
+fn evaluate_binary(binary: ast::Binary, context: &Context) -> Result<Value, RuntimeError> {
+    let lhs = evaluate(binary.lhs, context)?;
+    let rhs = evaluate(binary.rhs, context)?;
 
     let location = binary.location;
     match binary.op {
@@ -194,17 +194,17 @@ fn evaluate_binary(binary: ast::Binary, scope: &Scope) -> Result<Value, RuntimeE
     }
 }
 
-fn evaluate_let(let_: ast::Let, scope: &Scope) -> Result<Value, RuntimeError> {
+fn evaluate_let(let_: ast::Let, context: &Context) -> Result<Value, RuntimeError> {
     let name = let_.name.text;
-    let value = evaluate(let_.value, scope)?;
-    scope.set(name, value);
-    evaluate(let_.next, scope)
+    let value = evaluate(let_.value, context)?;
+    context.set(name, value);
+    evaluate(let_.next, context)
 }
 
-fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
-    match evaluate(if_.condition, scope)? {
-        Value::Bool(true) => evaluate(if_.then, scope),
-        Value::Bool(false) => evaluate(if_.otherwise, scope),
+fn evaluate_if(if_: ast::If, context: &Context) -> Result<Value, RuntimeError> {
+    match evaluate(if_.condition, context)? {
+        Value::Bool(true) => evaluate(if_.then, context),
+        Value::Bool(false) => evaluate(if_.otherwise, context),
         _ => Err(RuntimeError {
             message: String::from("Invalid condition"),
             location: if_.location,
@@ -213,8 +213,8 @@ fn evaluate_if(if_: ast::If, scope: &Scope) -> Result<Value, RuntimeError> {
     }
 }
 
-fn evaluate_var(var: ast::Var, scope: &Scope) -> Result<Value, RuntimeError> {
-    scope
+fn evaluate_var(var: ast::Var, context: &Context) -> Result<Value, RuntimeError> {
+    context
         .get(&var.text)
         .ok_or_else(|| RuntimeError {
             message: format!("Undefined variable {}", var.text),
