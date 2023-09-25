@@ -19,13 +19,21 @@ By default, the Rinha source code JSON AST is located at `/var/rinha/source.rinh
 
 ```bash
 docker build . -t rinha-interpreter
-docker run -v <rinha_file_path>:/var/rinha/source.rinha.json --memory=2gb --cpus=2 rinha-interpreter
+docker run -v /path/to/source.rinha.json:/var/rinha/source.rinha.json --memory=2gb --cpus=2 rinha-interpreter
 ```
 
-## Stack
+Please note that Docker is _required_ in order to run the interpreter.
 
-- [Rust](https://www.rust-lang.org)
-  - [Serde](https://serde.rs)
+## AST
+
+The [rinha crate](https://crates.io/crates/rinha) is required in order to generate the Rinha source code JSON AST.
+Once it's installed through `cargo install rinha`, the JSON AST can be generated using the following command.
+
+```bash
+rinha /path/to/source.rinha > /path/to/source.rinha.json
+```
+
+Please note that Rust is _required_ in order to install the rinha crate.
 
 ## References
 
@@ -37,3 +45,8 @@ docker run -v <rinha_file_path>:/var/rinha/source.rinha.json --memory=2gb --cpus
   - [Implementation](https://github.com/reu/rinha-compiladores)
 - [Henri Borges](https://github.com/hnrbs)
   - [Implementation](https://github.com/hnrbs/rinha)
+
+## Stack
+
+- [Rust](https://www.rust-lang.org)
+  - [Serde](https://serde.rs)
